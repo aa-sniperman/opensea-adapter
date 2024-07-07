@@ -1,0 +1,1 @@
+# Opensea Adapter
