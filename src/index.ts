@@ -1,149 +1,110 @@
-import { ethers } from "ethers"
 import { EventType, OpenSeaSDK, OrderSide } from "opensea-js";
-import { networkProvider, web3Wallet } from "./configs";
 import { Chain, TokenStandard } from "opensea-js";
 import { getWETHAddress } from "./utils";
+export * from './configs'
 
-export type AdapterParams = {
-    privateKey: string,
-    baseRpcUrl: string,
-    rpcApiKey: string,
-    openseaApiKey: string,
-    chain: Chain
+export async function createListing(
+    sdk: OpenSeaSDK,
+    accountAddress: string,
+    tokenAddress: string,
+    tokenId: string,
+    startETH: number,
+    expirationTime: number,
+    paymentTokenAddress: string = getWETHAddress(Chain.Base),
+    englishAuction: boolean = true,
+
+) {
+    const listing = await sdk.createListing({
+        asset: {
+            tokenAddress,
+            tokenId,
+            tokenStandard: TokenStandard.ERC721
+        },
+        accountAddress,
+        startAmount: startETH,
+        expirationTime,
+        paymentTokenAddress,
+        englishAuction
+    })
+
+    return listing;
 }
 
-export class OpenSeaAdapter {
-    private _provider: ethers.JsonRpcProvider;
-    private _openseaSDK: OpenSeaSDK;
-    private _wallet: ethers.Wallet;
-    private _chain: Chain;
-
-    constructor(params: AdapterParams) {
-        this._chain = params.chain
-        this._provider = networkProvider(params.baseRpcUrl, params.rpcApiKey);
-        this._wallet = web3Wallet(params.privateKey, this._provider);
-        this._openseaSDK = new OpenSeaSDK(this._wallet, {
-            chain: this._chain,
-            apiKey: params.openseaApiKey
-        });
-    }
-
-    get chain() {
-        return this._chain;
-    }
-
-    get openseaSDK() {
-        return this._openseaSDK
-    }
-
-    get provider() {
-        return this._provider
-    }
-
-    get walletAddress() {
-        return this._wallet.address
-    }
-
-    async createListing(
-        tokenAddress: string,
-        tokenId: string,
-        startETH: number,
-        expirationTime: number,
-        paymentTokenAddress: string = getWETHAddress(this._chain),
-        englishAuction: boolean = true,
-
-    ) {
-        const listing = await this._openseaSDK.createListing({
-            asset: {
-                tokenAddress,
-                tokenId,
-                tokenStandard: TokenStandard.ERC721
-            },
-            accountAddress: this.walletAddress,
-            startAmount: startETH,
-            expirationTime,
-            paymentTokenAddress,
-            englishAuction
-        })
-
-        return listing;
-    }
-
-    async createOffer(tokenAddress: string, tokenId: string, startETH: number) {
-        const offer = await this._openseaSDK.createOffer({
-            asset: {
-                tokenAddress,
-                tokenId,
-                tokenStandard: TokenStandard.ERC721
-            }, accountAddress: this.walletAddress, startAmount: startETH
-        })
-
-        return offer
-    }
-
-    async fulfillOrder(tokenAddress: string, tokenId: string) {
-        const orders = await this.fetchListings(tokenAddress, tokenId);
-        const order = orders.at(0);
-        if (!order) throw new Error('No order found');
-        return await this._openseaSDK.fulfillOrder({ order, accountAddress: this.walletAddress })
-    }
-
-    async fetchOrders(tokenAddress: string, tokenId: string) {
-        return (await this._openseaSDK.api.getOrders({
-            assetContractAddress: tokenAddress,
+export async function createOffer(sdk: OpenSeaSDK, accountAddress: string, tokenAddress: string, tokenId: string, startETH: number) {
+    const offer = await sdk.createOffer({
+        asset: {
+            tokenAddress,
             tokenId,
-            side: OrderSide.OFFER
-        })).orders
-    }
+            tokenStandard: TokenStandard.ERC721
+        }, accountAddress,
+        startAmount: startETH
+    })
 
-    async fetchListings(tokenAddress: string, tokenId: string) {
-        return (await this._openseaSDK.api.getOrders({
-            assetContractAddress: tokenAddress,
-            tokenId,
-            side: OrderSide.LISTING
-        })).orders
-    }
+    return offer
+}
 
-    async fetchNFT(tokenAddress: string, tokenId: string) {
-        return (await this._openseaSDK.api.getNFT(tokenAddress, tokenId, this._chain)).nft;
-    }
+export async function fulfillOrder(sdk: OpenSeaSDK, accountAddress: string, tokenAddress: string, tokenId: string) {
+    const orders = await fetchListings(sdk, tokenAddress, tokenId);
+    const order = orders.at(0);
+    if (!order) throw new Error('No order found');
+    return await sdk.fulfillOrder({ order, accountAddress })
+}
 
-    async fetchCollectionNFTs(slug: string) {
-        return (await this._openseaSDK.api.getNFTsByCollection(slug)).nfts
-    }
+export async function fetchOrders(sdk: OpenSeaSDK, tokenAddress: string, tokenId: string) {
+    return (await sdk.api.getOrders({
+        assetContractAddress: tokenAddress,
+        tokenId,
+        side: OrderSide.OFFER
+    })).orders
+}
 
-    async fetchAccountNFTs() {
-        return (await this._openseaSDK.api.getNFTsByAccount(this.walletAddress)).nfts
-    }
+export async function fetchListings(sdk: OpenSeaSDK, tokenAddress: string, tokenId: string) {
+    return (await sdk.api.getOrders({
+        assetContractAddress: tokenAddress,
+        tokenId,
+        side: OrderSide.LISTING
+    })).orders
+}
 
-    async fetchContractNFTs(tokenAddress: string) {
-        return (await this._openseaSDK.api.getNFTsByContract(tokenAddress)).nfts
-    }
+export async function fetchNFT(sdk: OpenSeaSDK, tokenAddress: string, tokenId: string) {
+    return (await sdk.api.getNFT(tokenAddress, tokenId)).nft;
+}
 
-    handleSDKEvents(){
-        this._openseaSDK.addListener(EventType.TransactionCreated, ({ transactionHash, event }) => {
-            console.info('Transaction created: ', { transactionHash, event })
-          })
-          this._openseaSDK.addListener(EventType.TransactionConfirmed, ({ transactionHash, event }) => {
-            console.info('Transaction confirmed: ',{ transactionHash, event })
-          })
-          this._openseaSDK.addListener(EventType.TransactionDenied, ({ transactionHash, event }) => {
-            console.info('Transaction denied: ',{ transactionHash, event })
-          })
-          this._openseaSDK.addListener(EventType.TransactionFailed, ({ transactionHash, event }) => {
-            console.info('Transaction failed: ',{ transactionHash, event })
-          })
-          this._openseaSDK.addListener(EventType.WrapEth, ({ accountAddress, amount }) => {
-            console.info('Wrap ETH: ',{ accountAddress, amount })
-          })
-          this._openseaSDK.addListener(EventType.UnwrapWeth, ({ accountAddress, amount }) => {
-            console.info('Unwrap ETH: ',{ accountAddress, amount })
-          })
-          this._openseaSDK.addListener(EventType.MatchOrders, ({ accountAddress }) => {
-            console.info('Match orders: ', { accountAddress })
-          })
-          this._openseaSDK.addListener(EventType.CancelOrder, ({ accountAddress }) => {
-            console.info('Cancel order: ', { accountAddress })
-          })
-    }
+export async function fetchCollectionNFTs(sdk: OpenSeaSDK, slug: string) {
+    return (await sdk.api.getNFTsByCollection(slug)).nfts
+}
+
+export async function fetchAccountNFTs(sdk: OpenSeaSDK, accountAddress: string) {
+    return (await sdk.api.getNFTsByAccount(accountAddress)).nfts
+}
+
+export async function fetchContractNFTs(sdk: OpenSeaSDK, tokenAddress: string) {
+    return (await sdk.api.getNFTsByContract(tokenAddress)).nfts
+}
+
+export async function handleSDKEvents(sdk: OpenSeaSDK) {
+    sdk.addListener(EventType.TransactionCreated, ({ transactionHash, event }) => {
+        console.info('Transaction created: ', { transactionHash, event })
+    })
+    sdk.addListener(EventType.TransactionConfirmed, ({ transactionHash, event }) => {
+        console.info('Transaction confirmed: ', { transactionHash, event })
+    })
+    sdk.addListener(EventType.TransactionDenied, ({ transactionHash, event }) => {
+        console.info('Transaction denied: ', { transactionHash, event })
+    })
+    sdk.addListener(EventType.TransactionFailed, ({ transactionHash, event }) => {
+        console.info('Transaction failed: ', { transactionHash, event })
+    })
+    sdk.addListener(EventType.WrapEth, ({ accountAddress, amount }) => {
+        console.info('Wrap ETH: ', { accountAddress, amount })
+    })
+    sdk.addListener(EventType.UnwrapWeth, ({ accountAddress, amount }) => {
+        console.info('Unwrap ETH: ', { accountAddress, amount })
+    })
+    sdk.addListener(EventType.MatchOrders, ({ accountAddress }) => {
+        console.info('Match orders: ', { accountAddress })
+    })
+    sdk.addListener(EventType.CancelOrder, ({ accountAddress }) => {
+        console.info('Cancel order: ', { accountAddress })
+    })
 }
