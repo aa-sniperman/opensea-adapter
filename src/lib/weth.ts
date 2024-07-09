@@ -1,6 +1,6 @@
 import { Chain } from "opensea-js";
-import { getWETHAddress } from "./constants/address";
-import { isMainnet } from "./constants/env";
+import { getWETHAddress } from "../constants/address";
+import { isMainnet } from "../constants/env";
 import { Weth__factory } from "root/typechain-types";
 import { ethers } from "ethers";
 

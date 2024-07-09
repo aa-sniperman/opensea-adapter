@@ -1,5 +1,5 @@
 import { Chain, OpenSeaSDK, OrderSide, TokenStandard } from "opensea-js";
-import { isMainnet, openseaApiKey, provider as defaultProvider } from "./constants/env";
+import { isMainnet, openseaApiKey, provider as defaultProvider } from "../constants/env";
 import { ethers } from "ethers";
 import { wrapETH as wrapETHFunc } from "./weth";
 

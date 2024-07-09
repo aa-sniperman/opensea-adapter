@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { mint1155NFT } from './erc-1155/mint';
-import { OpenSeaAdapter } from './opensea-adapter';
+import { OpenSeaAdapter } from './lib/opensea-adapter';
 import { TokenStandard } from 'opensea-js';
 import { provider } from './constants/env';
 
