@@ -1,3 +1,4 @@
+import { rpcApiKey, rpcEndpoint } from "@/constants/env";
 import { ethers } from "ethers";
 
 export function networkProvider(baseUrl: string, apiKey: string): ethers.JsonRpcProvider{
@@ -6,4 +7,4 @@ export function networkProvider(baseUrl: string, apiKey: string): ethers.JsonRpc
     return provider;
 }
 
-
+export const defaultProvider = networkProvider(rpcEndpoint, rpcApiKey);

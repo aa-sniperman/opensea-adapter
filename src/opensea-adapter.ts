@@ -1,25 +1,31 @@
-import { OrderSide, TokenStandard } from "opensea-js";
-import { buyerWallet, masterWallet, openseaSDK } from "./constants/env";
-
-const masterSDK = openseaSDK(masterWallet);
-const buyerSDK = openseaSDK(buyerWallet);
+import { Chain, OpenSeaSDK, OrderSide, TokenStandard } from "opensea-js";
+import { isMainnet, openseaApiKey } from "./constants/env";
+import { ethers } from "ethers";
+import { defaultProvider } from "./configs";
 
 export class OpenSeaAdapter {
+    private _wallet: ethers.Wallet;
+    private _sdk: OpenSeaSDK;
     private _tokenStandard: TokenStandard;
 
-    constructor(tokenStandard: TokenStandard) {
+    constructor(privateKey: string, tokenStandard: TokenStandard, provider = defaultProvider, sdkApiKey = openseaApiKey) {
         this._tokenStandard = tokenStandard;
+        this._wallet = new ethers.Wallet(privateKey, provider);
+        this._sdk = new OpenSeaSDK(this._wallet, {
+            chain: isMainnet ? Chain.Base : Chain.BaseSepolia,
+            apiKey: sdkApiKey
+        })
     }
 
-    async nftBalance(owner: string, tokenAddress: string, tokenId: string) {
-        const info = await masterSDK.api.getNFT(tokenAddress, tokenId);
-        const balance = info.nft.owners.find(ownership => ownership.address === owner.toLowerCase())?.quantity ?? 0;
+    async nftBalance(tokenAddress: string, tokenId: string) {
+        const info = await this._sdk.api.getNFT(tokenAddress, tokenId);
+        const balance = info.nft.owners.find(ownership => ownership.address === this._wallet.address.toLocaleLowerCase())?.quantity ?? 0;
         console.log(balance)
         return balance;
     }
 
     async takeListing(tokenAddress: string, tokenId: string) {
-        const order = (await buyerSDK.api.getOrders({
+        const order = (await this._sdk.api.getOrders({
             side: OrderSide.LISTING,
             tokenId,
             assetContractAddress: tokenAddress,
@@ -28,12 +34,12 @@ export class OpenSeaAdapter {
         })).orders.at(0);
 
         if (!order) return;
-        const result = await buyerSDK.fulfillOrder({ order, accountAddress: buyerWallet.address })
+        const result = await this._sdk.fulfillOrder({ order, accountAddress: this._wallet.address })
         console.log(result);
     }
 
     async takeOffer(tokenAddress: string, tokenId: string) {
-        const order = (await masterSDK.api.getOrders({
+        const order = (await this._sdk.api.getOrders({
             side: OrderSide.OFFER,
             tokenId,
             assetContractAddress: tokenAddress,
@@ -43,23 +49,23 @@ export class OpenSeaAdapter {
 
         if (!order) return;
         console.log(order)
-        const result = await masterSDK.fulfillOrder({ order, accountAddress: masterWallet.address })
+        const result = await this._sdk.fulfillOrder({ order, accountAddress: this._wallet.address })
         console.log(result);
     }
 
-    async listNFT(tokenAddress: string, tokenId: string, startAmount = 0.0003) {
-        const balance = await this.nftBalance(masterWallet.address, tokenAddress, tokenId);
+    async listNFT(tokenAddress: string, tokenId: string, startAmount = 0.0003, buyerAddress?: string) {
+        const balance = await this.nftBalance(tokenAddress, tokenId);
 
-        const result = await masterSDK.createListing({
+        const result = await this._sdk.createListing({
             asset: {
                 tokenAddress,
                 tokenId,
                 tokenStandard: this._tokenStandard
             },
-            accountAddress: masterWallet.address,
+            accountAddress: this._wallet.address,
             startAmount,
             quantity: balance,
-            buyerAddress: buyerWallet.address
+            buyerAddress
         })
 
         console.log(result);
@@ -67,14 +73,14 @@ export class OpenSeaAdapter {
     }
 
     async makeOffer(tokenAddress: string, tokenId: string, startAmount = 0.0001) {
-        const result = await buyerSDK.createOffer({
+        const result = await this._sdk.createOffer({
             asset: {
                 tokenAddress,
                 tokenId,
                 tokenStandard: this._tokenStandard
             },
-            accountAddress: buyerWallet.address,
-            startAmount: 0.0001
+            accountAddress: this._wallet.address,
+            startAmount,
         })
         console.log(result);
     }

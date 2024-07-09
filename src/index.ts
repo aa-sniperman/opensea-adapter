@@ -1,21 +1,15 @@
 import dotenv from 'dotenv';
+import { TokenStandard } from 'opensea-js';
+import { OpenSeaAdapter } from './opensea-adapter';
 dotenv.config();
 
-
-import { OpenSeaAdapter } from './opensea-adapter';
-import { TokenStandard } from 'opensea-js';
-import { deploy1155NFT } from './erc-1155/deploy';
-import { mint1155NFT } from './erc-1155/mint';
-import { masterWallet } from './constants/env';
-import { binanceWithdraw, client } from './binance';
-
-const erc721Adapter = new OpenSeaAdapter(TokenStandard.ERC721);
-const erc1155Adapter = new OpenSeaAdapter(TokenStandard.ERC1155);
-
-///deploy1155NFT();
-
 const tokenAddress = '0xD1307E82D12eBA24e6c08A0d1113e5ce9636F3D9'
-// erc1155Adapter.listNFT(tokenAddress, '1', 0.0002)
-// erc1155Adapter.takeListing(tokenAddress, '1')
+const tokenId = '2';
 
-binanceWithdraw('ETH', 0.0011, '0xEB5491C015b73C3B86F4B4a7E8982d97eC4628ff')
+const tokenStandard = TokenStandard.ERC1155;
+
+const privateKey = ''
+const adapter = new OpenSeaAdapter(privateKey, tokenStandard);
+
+
+adapter.listNFT(tokenAddress, tokenId)
