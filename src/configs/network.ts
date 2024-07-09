@@ -1,7 +1,6 @@
 import { ethers } from "ethers";
 
-export function networkProvider(baseUrl: string, apiKey: string): ethers.JsonRpcProvider{
-    const url = `${baseUrl}/${apiKey}`;
+export function networkProvider(url: string): ethers.JsonRpcProvider{
     const provider = new ethers.JsonRpcProvider(url);
     return provider;
 }
