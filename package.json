@@ -5,13 +5,14 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "tsc --build && tsc-alias",
-    "main": "ts-node src/index.ts",
+    "main": "npx ts-node-dev -r tsconfig-paths/register src/index.ts",
     "typechain:gen": "typechain --target=ethers-v6 abis/*.json --out-dir typechain-types"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.4.5",
     "ethers": "^6.13.1",
     "opensea-js": "^7.1.10"
   },

@@ -1,73 +1,18 @@
-import { networkProvider } from "./configs"
-import { getETHBalanceOfAccounts } from "./multicall"
+import dotenv from 'dotenv';
+dotenv.config();
 
-const addresses = [
-    "0x43872fda9e77d8f08b8313df7e1ddc4e4507829c",
-    "0x385353fe146c2efc628db9cd2101aa8e3d7497c7",
-    "0x7c7f3b1ee3ff7e9eb31677afea4b8741eec9243c",
-    "0xc0c1392760f09dc6bc077dc274725e54e22b37c0",
-    "0xc59e84195ab65115d748800ff67e08e4ffa8a243",
-    "0x7cb4685a542ccf342e29755bd927ee48ae5a3ab4",
-    "0x9c125331c4f3bb0fac5b93be82aa45fe9cf39ab9",
-    "0xd6c9eb6d7ce27295d438b1a62f713421773b185a",
-    "0x6368910c3bde3deb9973cfe62a4531a60d452736",
-    "0xc33d54d5c295b737bc578b42653762062062dda2",
-    "0x6d0d036a087ecbee1f3245e1290043189989f16a",
-    "0xa9701715bb727de3d58a29034d0015aab473f4de",
-    "0xeceddcb6ead28643f629ae814192472011c7aba6",
-    "0x854aa86626939e1bfa22ecf60e0b27904a55cb51",
-    "0x49eb030c348cdd5cd6d08dd808ffaebff90ffd1b",
-    "0x826af6f67d87058fce218a2a7b7f389dbc4410b1",
-    "0x7a2ce9f850b06b031514f75fb225dd272496b183",
-    "0x894118f9efa44b1c964f65b8aabaeeb46f5d87fd",
-    "0x2073f7209ed646847ce4e642c00b905f267434f7",
-    "0xabf582cf227187cf8a03ca6c129c0e47d9c50c8b",
-    "0xfb0f2d1e864f98ec2d64ac4664341a7a5e3d16c9",
-    "0x713f4e304be4a17376c0289b374257ecc15d8030",
-    "0x4e3e6976a8d012b9bd5709a9fc8272c8352a9f0d",
-    "0xd990be2c0e371aff031323d8e4cf207eab7c9d4e",
-    "0xe37523d5a0d76ba765aa547593d40604c1a3e48e",
-    "0xb631ceae2ea93e4134686941ab78fe2fa261d9c9",
-    "0x77e4125ba3bb57218258e78f6c776d4aae066553",
-    "0xba0d91740f972a26138236460c4c95a918b23641",
-    "0x76b032ae135e36c5918497874a04a7672673b39c",
-    "0xb9da56d61d1dc790c026693c60057601b6c4bfc7",
-    "0xa826ad0b8cf25201afdea0998a185ad68c05cab5",
-    "0x1766cd65a9d896c5be05d124f6215e7673924527",
-    "0x1dc9622a06a05d7fb20b65fdcdf87c2abf8f00f4",
-    "0xb2542b7a461abf94f0d6b654f9d46b2a004f307d",
-    "0x6635ebbe7ba960f2e7d2735cb8538ef0b8f326b2",
-    "0xddb78529eff69a8a654389c7daa1c23c554153fe",
-    "0x75094aed220d853d923550c938978eb8e395ca38",
-    "0xed573f67cfc226181e2172e0907739251e16496d",
-    "0x12eda8346ae4f0e7d32a85bfcecb02cdcf32adde",
-    "0xe6375707262842ad8f3bfc5e285701e32c653c95",
-    "0x86e9ba710caff6c4565514d7d99807f264594ac4",
-    "0x599278247571b5cfa042b635eb1006e90c79dde0",
-    "0x7130612f80753397c0ab6523d2fc5d2fee8eb9ba",
-    "0xffa1852bd1e12be9271ffb7bdf51f9af1905176f",
-    "0xe1e46115ea449621e3fbf6024118d58cb0fd83a2",
-    "0x7656df5400dfe1b89e19ba0f72e02893a2b423de",
-    "0x8645d9549716ca624c1403acb9ef38e0b8b24a99",
-    "0x457aa4fe96f81f6c309fd81f91a8a372c09d5976",
-    "0x9984de7951ef09419493698cebdbc9360c1dd0d1",
-    "0xeb9c79387f292f790262b58a1b48c9e3137bde4d",
-    "0xe0af76586f7f478e8c67b71219247ba6d7b56bc7",
-    "0x3849b836aa5ed772f20cbd8d9ba2281cf5a787c9",
-    "0xde913883febbbdfc0b85b6c0732822196754c9b2",
-    "0xf183545ed5b4ca79af8fd76c6bd569f9aa32dbda",
-    "0x508ea968ebb15ab2d73c040f404b0c46374fb02f",
-    "0xcf65eeeb6a2011bb860f38efc12716ad498df4c8",
-    "0x99265d004bb2a09938ef6cd60b122af071fcf682",
-    "0xead34f614a6b214a51e50bfcda2b80f32d252f67",
-    "0x3af816a77e04791778ee656f43c9e079f4bd6673",
-    "0xa01d98a3d72d40878055e5c8d2ef514dc5469218",
-    "0x25dd4d3ea84eba432c1f2cfe76bd31a13905fe46",
-    "0xdf2df668d85b67a8fd5714425abdc31f493dad22",
-    "0x0bcbce5e4a3e6b68cc93bb20085cd5d1e2f05252",
-    "0x1f393279bb414e4894081ec9013d4fb4070dd95c",
-    "0x834de0081c8535f0375593ad91e50bd794ec384a",
-]
 
-const provider = networkProvider('https://rpc.ankr.com/base', '<YOUR-API-KEY>')
-getETHBalanceOfAccounts(provider, addresses);
+import { OpenSeaAdapter } from './opensea-adapter';
+import { TokenStandard } from 'opensea-js';
+import { deploy1155NFT } from './erc-1155/deploy';
+import { mint1155NFT } from './erc-1155/mint';
+import { masterWallet } from './constants/env';
+
+const erc721Adapter = new OpenSeaAdapter(TokenStandard.ERC721);
+const erc1155Adapter = new OpenSeaAdapter(TokenStandard.ERC1155);
+
+///deploy1155NFT();
+
+const tokenAddress = '0xD1307E82D12eBA24e6c08A0d1113e5ce9636F3D9'
+// erc1155Adapter.listNFT(tokenAddress, '1', 0.0002)
+erc1155Adapter.takeListing(tokenAddress, '1')
