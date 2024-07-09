@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "binance-api-node": "^0.12.7",
     "dotenv": "^16.4.5",
     "ethers": "^6.13.1",
     "opensea-js": "^7.1.10"

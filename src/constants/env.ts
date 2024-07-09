@@ -8,6 +8,8 @@ export const masterPrivateKey = process.env.MASTER_PRIVATE_KEY as string;
 export const buyerPrivateKey = process.env.BUYER_PRIVATE_KEY as string;
 export const openseaApiKey = process.env.OPENSEA_API_KEY as string;
 export const isMainnet = process.env.NETWORK === 'mainnet';
+export const binanceApiKey = process.env.BINANCE_API_KEY as string;
+export const binanceApiSecret = process.env.BINANCE_API_SECRET as string;
 
 export const provider = networkProvider(rpcEndpoint, rpcApiKey);
 export const masterWallet = web3Wallet(masterPrivateKey, provider);
