@@ -1,13 +1,12 @@
 import DockMasterABI from 'root/abis/dockmaster.json';
 import { DockMasterByteCode } from '@/constants/contracts';
 import { ethers } from 'ethers';
-import { masterWallet} from '@/constants/env';
 
 
-export async function deployNFT() {
-    const factory = new ethers.ContractFactory(DockMasterABI, DockMasterByteCode, masterWallet);
+export async function deployNFT(wallet: ethers.Wallet) {
+    const factory = new ethers.ContractFactory(DockMasterABI, DockMasterByteCode, wallet);
 
-    const contract = await factory.deploy('Opensea NFT', 'ONFT', masterWallet.address);
+    const contract = await factory.deploy('Opensea NFT', 'ONFT', wallet.address);
 
     await contract.deploymentTransaction()?.wait();
 

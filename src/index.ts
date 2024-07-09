@@ -1,15 +1,30 @@
-import dotenv from 'dotenv';
-import { TokenStandard } from 'opensea-js';
+import { ethers } from 'ethers';
+import { mint1155NFT } from './erc-1155/mint';
 import { OpenSeaAdapter } from './opensea-adapter';
-dotenv.config();
+import { TokenStandard } from 'opensea-js';
+import { provider } from './constants/env';
 
-const tokenAddress = '0xD1307E82D12eBA24e6c08A0d1113e5ce9636F3D9'
-const tokenId = '2';
+async function example() {
+    const tokenAddress = '0xd1307e82d12eba24e6c08a0d1113e5ce9636f3d9'
+    const tokenId = '2';
+    const masterPrivateKey = '';
+    const buyerPrivateKey = '';
+    const masterWallet = new ethers.Wallet(masterPrivateKey, provider);
 
-const tokenStandard = TokenStandard.ERC1155;
+    mint1155NFT(masterWallet, tokenAddress, tokenId, 1000);
+    const tokenStandard = TokenStandard.ERC1155;
 
-const privateKey = ''
-const adapter = new OpenSeaAdapter(privateKey, tokenStandard);
+    const masterAdapter = new OpenSeaAdapter(masterPrivateKey, tokenStandard);
+    const buyerAdapter = new OpenSeaAdapter(buyerPrivateKey, tokenStandard);
 
+    // master list NFT
+    await masterAdapter.listNFT(tokenAddress, tokenId);
 
-adapter.listNFT(tokenAddress, tokenId)
+    // buyer wrap ETH
+    await buyerAdapter.wrapETH('0.0001');
+
+    // master fulfill buyer offer
+    await masterAdapter.takeOffer(tokenAddress, tokenId);
+}
+
+example();

@@ -1,7 +1,7 @@
 import { Chain, OpenSeaSDK, OrderSide, TokenStandard } from "opensea-js";
-import { isMainnet, openseaApiKey } from "./constants/env";
+import { isMainnet, openseaApiKey, provider as defaultProvider } from "./constants/env";
 import { ethers } from "ethers";
-import { defaultProvider } from "./configs";
+import { wrapETH as wrapETHFunc } from "./weth";
 
 export class OpenSeaAdapter {
     private _wallet: ethers.Wallet;
@@ -53,9 +53,7 @@ export class OpenSeaAdapter {
         console.log(result);
     }
 
-    async listNFT(tokenAddress: string, tokenId: string, startAmount = 0.0003, buyerAddress?: string) {
-        const balance = await this.nftBalance(tokenAddress, tokenId);
-
+    async listNFT(tokenAddress: string, tokenId: string, startAmount = 0.0003, buyerAddress?: string, quantity?: number) {
         const result = await this._sdk.createListing({
             asset: {
                 tokenAddress,
@@ -64,7 +62,7 @@ export class OpenSeaAdapter {
             },
             accountAddress: this._wallet.address,
             startAmount,
-            quantity: balance,
+            quantity,
             buyerAddress
         })
 
@@ -83,5 +81,9 @@ export class OpenSeaAdapter {
             startAmount,
         })
         console.log(result);
+    }
+
+    async wrapETH(amount: string){
+        await wrapETHFunc(this._wallet, amount);
     }
 }
