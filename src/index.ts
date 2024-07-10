@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { getNFTBalanceOfAccounts } from './lib/multicall';
+import { getNFTBalanceOfAccounts, getNFTOwners } from './lib/multicall';
 import { provider } from './constants/env';
 dotenv.config();
 
@@ -12,6 +12,10 @@ async function example() {
 
     const balances = await getNFTBalanceOfAccounts(provider, tokenAddress, accounts);
     console.log(balances);
+
+    const tokenIds = Array.from(Array(100).keys()).map(id => (id + 1).toString());
+    const owners = await getNFTOwners(provider, tokenAddress, tokenIds);
+    console.log(owners);
 }
 
 example();

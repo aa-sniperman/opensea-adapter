@@ -43,6 +43,14 @@ export const nftBalanceCall = (tokenAddress: string, walletAddress: string) => {
     }
 }
 
+export const nftOwnershipCall = (tokenAddress: string, tokenId: string) => {
+    return {
+        target: tokenAddress,
+        allowFailure: false,
+        callData: NFTInterface.encodeFunctionData("ownerOf", [tokenId])
+    }
+}
+
 export async function getETHBalanceOfAccounts(provider: ethers.JsonRpcProvider, accounts: string[]) {
     const multicall = new Contract(MULTICALL_ADDRESS, MULTICALL_ABI_ETHERS, provider);
 
@@ -70,4 +78,19 @@ export async function getNFTBalanceOfAccounts(provider: ethers.JsonRpcProvider, 
     })
 
     return balances;
+}
+
+export async function getNFTOwners(provider: ethers.JsonRpcProvider, tokenAddress: string, tokenIds: string[]) {
+    const multicall = new Contract(MULTICALL_ADDRESS, MULTICALL_ABI_ETHERS, provider);
+
+    const results: Aggregate3Response[] = await multicall.aggregate3.staticCall(tokenIds.map(id => nftOwnershipCall(tokenAddress, id)));
+
+    const owners = results.map((result, index) => {
+        return {
+            tokenId: tokenIds[index],
+            owner: NFTInterface.decodeFunctionResult("ownerOf", result.returnData)[0]
+        }
+    })
+
+    return owners;
 }
