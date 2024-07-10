@@ -1,30 +1,17 @@
-import { ethers } from 'ethers';
-import { mint1155NFT } from './erc-1155/mint';
-import { OpenSeaAdapter } from './lib/opensea-adapter';
-import { TokenStandard } from 'opensea-js';
+import dotenv from 'dotenv';
+import { getNFTBalanceOfAccounts } from './lib/multicall';
 import { provider } from './constants/env';
+dotenv.config();
 
 async function example() {
-    const tokenAddress = '0xd1307e82d12eba24e6c08a0d1113e5ce9636f3d9'
-    const tokenId = '2';
-    const masterPrivateKey = '';
-    const buyerPrivateKey = '';
-    const masterWallet = new ethers.Wallet(masterPrivateKey, provider);
+    const tokenAddress = '0xa0a8e022b41c8223a939705980df66ee54a254b9'
+    const accounts = [
+        '0x968eFA0a167d5Fb6AA3700c418fBa9C11D20E1C0',
+        '0x449cB8074A242636f5f3e44fbd64cbE3a7D2027F',
+    ]
 
-    mint1155NFT(masterWallet, tokenAddress, tokenId, 1000);
-    const tokenStandard = TokenStandard.ERC1155;
-
-    const masterAdapter = new OpenSeaAdapter(masterPrivateKey, tokenStandard);
-    const buyerAdapter = new OpenSeaAdapter(buyerPrivateKey, tokenStandard);
-
-    // master list NFT
-    await masterAdapter.listNFT(tokenAddress, tokenId);
-
-    // buyer wrap ETH
-    await buyerAdapter.wrapETH('0.0001');
-
-    // master fulfill buyer offer
-    await masterAdapter.takeOffer(tokenAddress, tokenId);
+    const balances = await getNFTBalanceOfAccounts(provider, tokenAddress, accounts);
+    console.log(balances);
 }
 
 example();
