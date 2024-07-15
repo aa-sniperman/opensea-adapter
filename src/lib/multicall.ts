@@ -1,6 +1,6 @@
 const MULTICALL_ADDRESS = '0xcA11bde05977b3631167028862bE2a173976CA11'
 import { Contract, ethers, Interface } from 'ethers';
-import { Dockmaster__factory } from 'root/typechain-types';
+import { Dockmaster__factory, Weth__factory } from 'root/typechain-types';
 
 // Ethers
 export const MULTICALL_ABI_ETHERS = [
@@ -26,12 +26,21 @@ export const MULTICALL_ABI_ETHERS = [
 type Aggregate3Response = { success: boolean; returnData: string };
 const MulticallInterface = new Interface(MULTICALL_ABI_ETHERS)
 const NFTInterface = Dockmaster__factory.createInterface();
+const WETHInterface = Weth__factory.createInterface();
 
 export const ethBalanceCall = (account: string) => {
     return {
         target: MULTICALL_ADDRESS,
         allowFailure: false,
         callData: MulticallInterface.encodeFunctionData("getEthBalance", [account])
+    }
+}
+
+export const erc20BalanceCall = (tokenAddress: string, walletAddress: string) => {
+    return {
+        target: tokenAddress,
+        allowFailure: false,
+        callData: WETHInterface.encodeFunctionData("balanceOf", [walletAddress])
     }
 }
 
@@ -93,4 +102,31 @@ export async function getNFTOwners(provider: ethers.JsonRpcProvider, tokenAddres
     })
 
     return owners;
+}
+
+export async function getAccountAssetBalance(provider: ethers.JsonRpcProvider, account: string, readETH: boolean, erc20s: string[]) {
+    const multicall = new Contract(MULTICALL_ADDRESS, MULTICALL_ABI_ETHERS, provider);
+    const erc20Calls = erc20s.map(erc20 => erc20BalanceCall(erc20, account));
+    const ethCall = ethBalanceCall(account);
+    const calls = readETH ? [ethCall, ...erc20Calls] : erc20Calls;
+    const callResults: Aggregate3Response[] = await multicall.aggregate3.staticCall(calls);
+    const results: { asset: string, balance: BigInt }[] = [];
+    if (readETH) {
+        const ethResult = callResults.shift();
+        if (ethResult) {
+            results.push({
+                asset: 'ETH',
+                balance: BigInt(MulticallInterface.decodeFunctionResult("getEthBalance", ethResult.returnData)[0])
+            })
+        }
+    }
+
+    callResults.forEach((result, index) => {
+        results.push({
+            asset: erc20s[index],
+            balance: BigInt(WETHInterface.decodeFunctionResult("balanceOf", result.returnData)[0])
+        })
+    })
+
+    return results;
 }
