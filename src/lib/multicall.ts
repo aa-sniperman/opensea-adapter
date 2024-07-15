@@ -109,16 +109,19 @@ export async function getAccountAssetBalance(provider: ethers.JsonRpcProvider, a
     const erc20Calls = erc20s.map(erc20 => erc20BalanceCall(erc20, account));
     const ethCall = ethBalanceCall(account);
     const calls = readETH ? [ethCall, ...erc20Calls] : erc20Calls;
-    const callResults: Aggregate3Response[] = await multicall.aggregate3.staticCall(calls);
+    let callResults: Aggregate3Response[] = await multicall.aggregate3.staticCall(calls);
+
     const results: { asset: string, balance: BigInt }[] = [];
     if (readETH) {
-        const ethResult = callResults.shift();
+        const ethResult = callResults[0];
         if (ethResult) {
             results.push({
                 asset: 'ETH',
                 balance: BigInt(MulticallInterface.decodeFunctionResult("getEthBalance", ethResult.returnData)[0])
             })
         }
+
+        callResults = callResults.slice(1);
     }
 
     callResults.forEach((result, index) => {

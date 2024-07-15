@@ -17,7 +17,15 @@ export async function wrapETH(wallet: ethers.Wallet, amount: string) {
 export async function unwrapETH(wallet: ethers.Wallet, amount: string) {
     const wethContract = Weth__factory.connect(wethAddress, wallet);
 
-    const result = await wethContract.withdraw(amount);
+    const result = await wethContract.withdraw(ethers.parseEther(amount));
+    await result.wait();
+    console.log(result);
+}
+
+export async function transfer(wallet: ethers.Wallet, tokenAddress: string, recipient: string, amount: string) {
+    const tokenContract = Weth__factory.connect(tokenAddress, wallet);
+
+    const result = await tokenContract.transfer(recipient, ethers.parseEther(amount));
     await result.wait();
     console.log(result);
 }
