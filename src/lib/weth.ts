@@ -22,10 +22,10 @@ export async function unwrapETH(wallet: ethers.Wallet, amount: string) {
     console.log(result);
 }
 
-export async function transfer(wallet: ethers.Wallet, tokenAddress: string, recipient: string, amount: string) {
+export async function transfer(wallet: ethers.Wallet, tokenAddress: string, recipient: string, amount: string, decimals: number) {
     const tokenContract = Weth__factory.connect(tokenAddress, wallet);
 
-    const result = await tokenContract.transfer(recipient, ethers.parseEther(amount));
+    const result = await tokenContract.transfer(recipient, ethers.parseUnits(amount, decimals));
     await result.wait();
     console.log(result);
 }
